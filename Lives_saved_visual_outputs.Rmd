@@ -1,0 +1,182 @@
+---
+title: "Lives saved by COVID-19 vaccination analysis - update"
+output: word_document
+---
+```{r setup, include = FALSE, warning = FALSE, message = FALSE, comment = FALSE}
+
+  library(flextable)
+  today.date <- Sys.Date()
+
+  Kosovo.footnote <- "[1] All references to Kosovo in this document should be understood to be in the context of the United Nations Security Council resolution 1244 (1999)."
+
+```
+Date of latest update: `r format(Sys.Date(), format= "%d %B %Y")`\
+**Date of current document creation: `r format(Sys.Date(), format= "%d %B %Y")`**\
+
+\newpage
+```{r Figure 1, warning = FALSE, message = FALSE, comment = FALSE, echo = FALSE, fig.height = 12, fig.width = 10}
+
+create.summary.panel.plots.finer.older(Country_population_finer, variant_waves_region, 
+                                       cases, deaths_age_finer, vax_clean_finer, to.save = TRUE)
+
+```
+
+Figure 1. Summary of observed infection and mortality rates (A), vaccination rates (B), cumulative vaccination rates (C), rate of lives saved and expected mortality (D) and cumulative rate of lives saved and expected mortality (E), per age-group in 34 countries in the WHO European Region in context of circulating Variants of Concern (VOC) (black horizontal lines). Note: all rates are per 100,000 population and the ≥60 years age group includes data for all 34 countries, areas and territories.
+
+\newpage   
+Table 2. Number of reported, expected deaths and lives saved, cumulatively and Per Variant Month (PVM) with number of countries, areas and territories (CAT) included in each age group; from SARS-CoV-2 infection (rate per 100,000 general population) are shown in brackets, by variant-period and age-group, between weeks 50/2020 and 12/2023, in 34 CAT in the WHO European Region. Notes: the Index variant refers to the original circulating variant, or wild-type; the ≥60 years age group includes data for all 34 CAT; the Total is calculated as the sum of 25-49, 50-59 and ≥60 years age groups. The duration of each VOC dominance is Index: 2 months; Alpha: 7 months; Delta: 6 months and Omicron: 16 months.         
+```{r Table 2, warning = FALSE, message = FALSE, comment = FALSE, echo = FALSE}
+ 
+t2 <- create.expected.observed.by.variant.table(Expected_cases_all_ages, 
+                                                variant_months_region,
+                                                version = "Include monthly breakdown") %>% 
+  mutate(Total = ifelse(`Age group\n(years)` == "Total" & Mortality %in% c("Expected PVM", "Lives Saved PVM"), 
+                        NA, Total)) %>% 
+  rename(`Age group in years\n(n CAT)` = "Age group\n(years)") %>% 
+  mutate(`Age group in years\n(n CAT)` = case_when(`Age group in years\n(n CAT)` == "25-49" ~ "25-49\n(31 CAT)",
+                                                   `Age group in years\n(n CAT)` == "50-59" ~ "50-59\n(31 CAT)",
+                                                   `Age group in years\n(n CAT)` == "≥60" ~ "≥60\n(34 CAT)", 
+                                                   `Age group in years\n(n CAT)` == "60-69" ~ "60-69\n(29 CAT)", 
+                                                   `Age group in years\n(n CAT)` == "70-79" ~ "70-79\n(29 CAT)",
+                                                   `Age group in years\n(n CAT)` == "≥80" ~ "≥80\n(29 CAT)",
+                                                   `Age group in years\n(n CAT)` == "Total" ~ "Total\n(34 CAT)"))
+   
+Table.2 <- flextable(t2) %>%
+   theme_vanilla() %>%
+   merge_v(j = "Age group in years\n(n CAT)", target = "Age group in years\n(n CAT)") %>% 
+   align(align = "center", part = "all") %>% 
+   set_table_properties(layout = "autofit") 
+
+Table.2
+save_as_docx(Table.2, path = "Outputs/WHO_EURO_Lives_saved_COVID_vaccines_Table_2.docx")
+
+ 
+```
+
+\newpage   
+Table 3. Total Vaccine Uptake (VU) and number of lives saved by COVID-19 vaccine dose, variant and age-group, and as percentage of total lives saved in brackets, since the start of vaccinations in 34 countries in the WHO European Region. Notes: the ≥60 years age group includes data for all 34 countries; the Total is calculated as the sum of 25-49, 50-59 and ≥60 years age groups.   
+```{r Table 3, warning = FALSE, message = FALSE, comment = FALSE, echo = FALSE}
+
+t3.1 <- vaccination.by.age(vax_clean, Country_population, geo = "Region") %>% 
+  mutate(FirstDoseTotal = paste0(format(FirstDose, big.mark = ","), " (", pcFirstDose, "%)"),
+         SecondDoseTotal = paste0(format(SecondDose, big.mark = ","), " (", pcSecondDose, "%)"),
+         DoseAdditional1Total = paste0(format(DoseAdditional1, big.mark = ","), " (", pcDoseAdditional1, "%)"),
+         DoseAdditional2Total = paste0(format(DoseAdditional2, big.mark = ","), " (", pcDoseAdditional2, "%)"),
+         DoseAdditional3Total = paste0(format(DoseAdditional3, big.mark = ","), " (", pcDoseAdditional3, "%)"),
+         TotalDoses = format(TotalDoses, big.mark = ","),
+         TargetGroup = str_remove(TargetGroup, "Age "),
+         TargetGroup = ifelse(TargetGroup == "60+", "≥60",
+                                  ifelse(TargetGroup == "80+", "≥80", TargetGroup)),
+         TargetGroup = ifelse(TargetGroup == "TotalDoses", "Total", TargetGroup)) %>% 
+  select(TargetGroup, FirstDoseTotal : DoseAdditional3Total, TotalDoses) %>% 
+  rename(`Age group (years)` = TargetGroup,
+         `First dose` = FirstDoseTotal,
+         `Second dose` = SecondDoseTotal,
+         `First booster` = DoseAdditional1Total,
+         `Second booster` = DoseAdditional2Total,
+         `Third booster` = DoseAdditional3Total,
+         Total = TotalDoses) %>%
+  pivot_longer(cols = `First dose` : `Total`,
+               names_to = "Dosage",
+               values_to = "VU (%)")
+
+t3.2 <- lives_saved_variant(Expected_cases_all_ages, measure = "By finer age and dose") %>% 
+  mutate(Dosage = ifelse(Dosage == "Dose 1", "First dose",
+                         ifelse(Dosage == "Dose 2", "Second dose",
+                                ifelse(Dosage == "Dose 3", "First booster", 
+                                       ifelse(Dosage == "Dose 4", "Second booster", 
+                                              ifelse(Dosage == "Dose 5", "Third booster", "Total")))))) 
+
+
+t3 <- t3.1 %>% 
+  full_join(t3.2, by = c("Age group (years)" = "Age group\n(years)", "Dosage" = "Dosage")) %>% 
+  select(`Age group (years)`, Dosage, `VU (%)`, Alpha, Delta, Omicron, Total) %>% 
+  rename(`Age group in years\n(n CAT)` = "Age group (years)") %>% 
+  mutate(`Age group in years\n(n CAT)` = case_when(`Age group in years\n(n CAT)` == "25-49" ~ "25-49\n(31 CAT)",
+                                                   `Age group in years\n(n CAT)` == "50-59" ~ "50-59\n(31 CAT)",
+                                                   `Age group in years\n(n CAT)` == "≥60" ~ "≥60\n(34 CAT)", 
+                                                   `Age group in years\n(n CAT)` == "60-69" ~ "60-69\n(29 CAT)", 
+                                                   `Age group in years\n(n CAT)` == "70-79" ~ "70-79\n(29 CAT)",
+                                                   `Age group in years\n(n CAT)` == "≥80" ~ "≥80\n(29 CAT)",
+                                                   `Age group in years\n(n CAT)` == "Total" ~ "Total\n(34 CAT)"))
+
+Table.3 <- flextable(t3) %>% 
+  theme_vanilla() %>% 
+  vline(i = NULL, j = c("VU (%)"), part = "all") %>% 
+  add_header_row(values = c("", "Lives saved by variant and dose"), colwidths = c(3, 4)) %>%
+  merge_v(j = "Age group in years\n(n CAT)", target = "Age group in years\n(n CAT)") %>% 
+  align(align = "center", part = "all") %>% 
+  set_table_properties(layout = "autofit") %>% 
+  fontsize(size = 9, part = "footer")  
+
+Table.3
+save_as_docx(Table.3, path = "Outputs/WHO_EURO_Lives_saved_COVID_vaccines_Table_3.docx")
+
+```
+
+
+\newpage   
+```{r Figure 2, warning = FALSE, message = FALSE, comment = FALSE, echo = FALSE, fig.height = 6, fig.width = 10}
+
+plot.regional.vaccination.curves(Expected_cases_all_ages, 
+                                 variant_waves_region, 
+                                 reporting.weeks, 
+                                 version = "Counts and percentages by finer ages",
+                                 to.save = TRUE) 
+
+```
+
+Figure 2. Counts (top row) and percentage (bottom row) of estimated lives saved per vaccine dose per age-groups, between weeks 50/2020 and 12/2023, in 34 countries, areas and territories (CAT) in the WHO European Region. Note: the ≥60 years age group includes data for all 34 CAT.     
+
+
+\newpage
+Table 4. Cumulative vaccination uptake, number of deaths observed and lives saved, observed and expected mortality rates per 100,000 population aged ≥25 years, by country, for weeks 50/2020 to 12/2023. Notes: countries have been ordered according to the proportion of lives saved; d1 refers to first vaccine dose, d2 refers to second doses, d3 refers to first booster, d4 refers to second booster and d5 refers to third booster; data presented below for Germany, Republic of Moldova and Ukraine only considers the ≥60 years age group.   
+```{r Table 4, warning = FALSE, message = FALSE, comment = FALSE, echo = FALSE}
+
+table.4.footnote <- ("^1^ Booster doses were not reported by the CAT for at least one age group and so were calculated using the average percentage change of vaccination coverage from CAT with booster 2 and 3 reporting.\n^2^ It was not possible to differentiate booster doses 2 and 3 from booster 1. The same method as above (1) was used for these CAT.")
+
+t4 <- create.table.3(Expected_cases_all_ages, variant_waves, resolution = "Country") %>% 
+  mutate(Country = ifelse(Country %in% c("Israel", "Slovenia", "Sweden", "Germany", "Lithuania", "Croatia", 
+                                         "Latvia", "Romania"),
+                          paste0(Country, "^1^"), Country),
+         Country = ifelse(Country %in% c("United Kingdom (England)", "Switzerland", 
+                                         "Republic of Moldova", "Ukraine"),
+                          paste0(Country, "^1,2^"), Country),
+         Country = ifelse(Country %in% c("Kosovo", "Kosovo*"), "Kosovo [1]", Country)) %>% 
+  rename(`Countries, areas or territories` = Country)
+
+Table.4 <- flextable(t4) %>%
+  theme_vanilla() %>%
+  vline(i = NULL, j = c("Vaccination uptake Additional 3", "Averted total"), part = "all") %>% 
+  add_header_row(values = c("", "Vaccination uptake", "Number of lives", "Mortality rate per 100,000"), 
+                 colwidths = c(1, 4, 7, 3)) %>%
+  set_header_labels(`Vaccination uptake Full` = "VU2",
+                    `Vaccination uptake Additional 1` = "VU3", 
+                    `Vaccination uptake Additional 2` = "VU4", 
+                    `Vaccination uptake Additional 3` = "VU5", 
+                    `Number of deaths observed` = "Reported deaths",
+                    `Averted after one dose` = "Saved after d1", 
+                    `Averted after two doses` = "Saved after d2",
+                    `Averted after first additional dose` = "Saved after d3", 
+                    `Averted after second additional dose` = "Saved after d4",
+                    `Averted after third additional dose` = "Saved after d5",
+                    `Averted total` = "Total Saved", 
+                    `Observed mortality rate` = "Reported", 
+                    `Total Expected` = "Total Expected",
+                    `% expected deaths averted by vaccination` = "% change") %>% 
+  fontsize(size = 10, part = "header") %>%
+  fontsize(size = 10, part = "body") %>%
+  align(align = "center", part = "all") %>% 
+  add_footer_row(values = Kosovo.footnote, colwidths = 15) %>%
+  add_footer_row(values = table.4.footnote, colwidths = 15) %>% 
+  set_table_properties(layout = "autofit") 
+
+
+Table.4
+save_as_docx(Table.4, path = "Outputs/WHO_EURO_Lives_saved_COVID_vaccines_Table_4.docx")
+
+
+```
+
+
+
