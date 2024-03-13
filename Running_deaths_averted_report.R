@@ -1,4 +1,4 @@
-# Script to calculate number of deaths as averted from COVID-19 vaccination programs in WHO European Region
+# Script to calculate number of lives saved by COVID-19 vaccination programs in the WHO European Region
 # Margaux Mesle - meslem@who.int
 # First created: June 2021
 # Latest update: October 2023
@@ -8,22 +8,8 @@
 #  - Vaccination coverage in country, for same age groups, in given weeks
 #  - Vaccine effectiveness per dose and variant
 
-# Countries that have been excluded completely or partially and why
-# ? Albania (partial): awaiting more complete data to be uploaded
-# Belarus (complete): they have never reported mortality or vaccination data
-# Bulgaria (complete): does not have mortality data in correct age groups (at country source)
-# Bosnia and Herzegovina (complete): reported 'doses unknown' (rather than first or second dose) until week 41/2021
-# Georgia (complete): cannot report mortality data in fine enough age groups
-# Kazakhstan (complete): have never reported mortality or vaccination data
-# Kyrgyzstan (complete): have never reported mortality or vaccination data
-# Norway (partial): they have changed their mortality reporting system part way through 2022
-# Russia (complete): have never reported mortality or vaccination data
-# Serbia (complete): have never reported mortality or vaccination data
-# Uzbekistan (complete): cannot report mortality data in fine enough age groups
-
 # Please note: 
-# - this code is meant to be run with age-group selection at a time. This includes either one or all three age-groups at one time.
-# - code information for both sensitivity analyses have been included at the very end of this script.
+# - code information for all sensitivity analyses have been included at the very end of this script.
 
   rm(list=ls())
   library(ggplot2)
@@ -336,8 +322,8 @@
                                                        Ukraine_vaccinations, Netherlands_vaccination) 
   
 
-  # rm(Iceland_mortality, Israel_mortality, Kosovo_mortality, Lithuania_mortality, Scotland_mortality,
-  #    England_vaccinations, Israel_vaccination, Scotland_vaccination, Ukraine_vaccinations, Romania_mortality)
+  rm(Iceland_mortality, Israel_mortality, Kosovo_mortality, Lithuania_mortality, Scotland_mortality,
+     England_vaccinations, Israel_vaccination, Scotland_vaccination, Ukraine_vaccinations, Romania_mortality)
   
   ####################
   # Run calculations #
@@ -508,7 +494,7 @@
       }
         
       # Find correct values (VE, lag times and waning rates) for each scenario
-      ve_by_variant <- calc.ve.by.variant.sensitivity(sensitivity)
+      ve_by_variant <- calc.ve.by.variant.sensitivity(sensitivity, VE_values)
       
       # Running each scenario in turn and saving the outputs
         Expected_cases_all_ages <- calculate.expected.deaths(deaths_age, vax_clean, variant_waves, ve_by_variant, 
