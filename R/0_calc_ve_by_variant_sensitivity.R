@@ -9,6 +9,7 @@ calc.ve.by.variant.sensitivity <- function(sensitivity, VE_values) {
   # Original analysis
   VE_values_original <- VE_values %>% 
     select(Variant, Dose, VE) %>% 
+    mutate(VE = VE / 100) %>% 
     pivot_wider(names_from = Variant, 
                 values_from = VE) %>% 
     mutate(Dose = trimws(Dose),
@@ -28,6 +29,7 @@ calc.ve.by.variant.sensitivity <- function(sensitivity, VE_values) {
   # Sensitivity analysis 1: high VE values
   VE_values_SA1 <- VE_values %>% 
     select(Variant, Dose, Upper_CI) %>% 
+    mutate(Upper_CI = Upper_CI / 100) %>%
     pivot_wider(names_from = Variant, 
                 values_from = Upper_CI) %>% 
     mutate(Dose = trimws(Dose),
@@ -46,6 +48,7 @@ calc.ve.by.variant.sensitivity <- function(sensitivity, VE_values) {
   # Sensitivity analysis 2: low VE values
   VE_values_SA2 <- VE_values %>% 
     select(Variant, Dose, Lower_CI) %>% 
+    mutate(Lower_CI = Lower_CI / 100) %>%
     pivot_wider(names_from = Variant, 
                 values_from = Lower_CI) %>% 
     mutate(Dose = trimws(Dose),
