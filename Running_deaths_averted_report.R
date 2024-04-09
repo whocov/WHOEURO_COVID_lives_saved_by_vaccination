@@ -204,6 +204,8 @@
                                      yearmonth = format(as.Date(all.dates), "%Y-%m")) %>% 
     filter(year_week %in% reporting.weeks) %>% 
     select(-all.dates) %>% 
+    add_row(year_week = "2020-50", yearmonth = "2020-12") %>% 
+    add_row(year_week = "2020-51", yearmonth = "2020-12") %>%
     add_row(year_week = "2021-53", yearmonth = "2021-12") %>% 
     add_row(year_week = "2022-53", yearmonth = "2022-12") %>% 
     arrange(year_week) %>% 
