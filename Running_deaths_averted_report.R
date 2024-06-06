@@ -193,7 +193,8 @@
   # create range of all reporting weeks
   start.week <- start.week.period
   end.week <- end.week.period
-  all.dates <- seq(Sys.Date() - 1200, Sys.Date() + 1050, 1)
+  # Make sure first date is in November 2020 or earlier
+  all.dates <- seq(Sys.Date() - 1500, Sys.Date() + 1050, 1)
   all.weeks <- seq(Sys.Date() - 2050, Sys.Date() + 1050, 1)
   all.weeks <- unique(str_replace(ISOweek(all.weeks), "W", ""))
   all.weeks <- all.weeks[which(all.weeks == start.week):which(all.weeks == end.week)] 
